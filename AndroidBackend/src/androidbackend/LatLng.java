@@ -39,6 +39,14 @@ public class LatLng {
         LatLng other = (LatLng) obj;
         return this.latitude == other.latitude && this.longitude == other.longitude;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.latitude) ^ (Double.doubleToLongBits(this.latitude) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.longitude) ^ (Double.doubleToLongBits(this.longitude) >>> 32));
+        return hash;
+    }
     
     
 }

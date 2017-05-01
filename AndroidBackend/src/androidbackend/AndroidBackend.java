@@ -5,21 +5,14 @@
  */
 package androidbackend;
 
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import com.sun.net.httpserver.HttpExchange;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 /**
@@ -29,74 +22,84 @@ import javax.imageio.ImageIO;
 public class AndroidBackend {
 
     private static final String SENDIMAGE = "SEND";
-    private static final String DOWNLOADIMAGES = "DOWN";
-    private static final String OKAY = "OKAY\n";
+    private static final String DOWNLOADIMAGES = "DOWNLOAD";
+    private static final String OKAY = "OKAY";
+    private static final String OKAYSEND = "OKAY\n";
+    private static final String EMPTY = "EMPTY\n";
+    private static final String DONE = "DONE\n";
+    private static final String SENDING = "SENDING\n";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         HashMap<LatLng, LinkedList<ImageContainer>> images = new HashMap();
-        ServerSocket serverSocket;
-        try {
-            serverSocket = new ServerSocket(9999);
-            String currentMessage = "";
+        ServerSocket serverSocket = new ServerSocket(9999);
             while (true) {
+                try {
+                String currentMessage = "hest";
                 Socket clientSocket = serverSocket.accept();
                 OutputStream out = clientSocket.getOutputStream();
                 InputStream in = clientSocket.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 currentMessage = reader.readLine();
-                System.out.println(currentMessage);
-
                 if (currentMessage.equals(SENDIMAGE)) {
-                    out.write(OKAY.getBytes());
+                    out.write(OKAYSEND.getBytes());
                     double lat = Double.parseDouble(reader.readLine());
-                    out.write(OKAY.getBytes());
+                    out.write(OKAYSEND.getBytes());
                     double lng = Double.parseDouble(reader.readLine());
-                    out.write(OKAY.getBytes());
+                    out.write(OKAYSEND.getBytes());
                     BufferedImage image = ImageIO.read(in);
                     LatLng latLng = new LatLng(lat, lng);
                     ImageContainer ic = new ImageContainer(image, new Date());
                     if (images.containsKey(latLng)) {
-                        if (images.get(latLng) == null) {
-                            LinkedList<ImageContainer> list = new LinkedList();
-                            list.add(ic);
-                            images.put(latLng, list);
-                        } else {
                             LinkedList<ImageContainer> list = images.get(latLng);
                             list.add(ic);
+                            Date compareDate = new Date();
+                            for (ImageContainer imageContainer : list) {
+                                if ((imageContainer.getTimestamp().getTime() + 3600000) <= compareDate.getTime()) {
+                                    list.remove(imageContainer);
+                                }
+                            }
                             images.put(latLng, list);
-                        }
                     } else {
                         LinkedList<ImageContainer> list = new LinkedList();
                         list.add(ic);
+                        Date compareDate = new Date();
                         images.put(latLng, list);
+                        for (ImageContainer imageContainer : list) {
+                            if ((imageContainer.getTimestamp().getTime() + 3600000) <= compareDate.getTime()) {
+                                list.remove(imageContainer);
+                            }
+                        }
                     }
-                    FileOutputStream outTemp = new FileOutputStream("img.gif");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ImageIO.write(images.get(latLng).get(0).getImage(), "gif", baos);
-                    byte[] bytes = baos.toByteArray();
-                    for(byte b : bytes) {
-                        System.out.println(b);
-                    }
-                    outTemp.write(bytes);
-                    outTemp.close();
 
                 } else if (currentMessage.equals(DOWNLOADIMAGES)) {
-                    File file = new File("audiogram_image_large.gif");
-                    int write;
-                    in = new FileInputStream(file);
-                    while ((write = in.read()) != -1) {
-                        System.out.println(write);
-                        out.write(write);
-                    }
+                    out.write(OKAYSEND.getBytes());
+                    double lat = Double.parseDouble(reader.readLine());
+                    out.write(OKAYSEND.getBytes());
+                    double lng = Double.parseDouble(reader.readLine());
+                    LatLng latLng = new LatLng(lat, lng);
+                    if (images.get(latLng) != null) {
+                        LinkedList<ImageContainer> list = images.get(latLng);
+                        out.write(OKAYSEND.getBytes());
+                        reader.readLine();
+                        for(ImageContainer imageContainer : list) {
+                            out.write(SENDING.getBytes());
+                            reader.readLine();
+                            ImageIO.write(imageContainer.getImage(), "jpg", out);
+                        }
+                        out.write(DONE.getBytes());
+                        
+                    } else {
+                        out.write(EMPTY.getBytes());
+                        reader.readLine();
+                    }  
 
                 } else {
 
                 }
                 clientSocket.close();
-            }
-        } catch (Exception ex) {
-            ex.getMessage();
+                    System.out.println("REQUEST HANDLED MAYBE");
+                } catch (Exception ex) {
         }
+            }
     }
-
 }

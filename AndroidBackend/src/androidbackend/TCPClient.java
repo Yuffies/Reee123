@@ -5,6 +5,7 @@
  */
 package androidbackend;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -19,23 +20,46 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import javax.imageio.ImageIO;
 
 class TCPClient {
 
-    private Socket client;
-    private PrintWriter printWriter;
     private String currentMessage;
     private static InputStream in;
     private static final String SENDIMAGE = "SEND\n";
     private static final String OKAY = "OKAY";
+    private static final String OKAYSEND = "OKAY\n";
+    private static final String DOWNLOADIMAGES = "DOWNLOAD\n";
+    private static final String EMPTY = "EMPTY";
+    private static final String SENDING = "SENDING";
+    private static final String DONE = "DONE";
+    private static final String RECIEVED = "RECEIVED\n";
+    private static int counter = 0;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         TCPClient cp = new TCPClient();
-        cp.ConnectAndSendMessage();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
+        cp.ConnectAndSendImage();
+        cp.ConnectAndDownloadImages();
     }
 
-    public void ConnectAndSendMessage() {
+    public void ConnectAndSendImage() throws InterruptedException {
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -47,7 +71,7 @@ class TCPClient {
                     OutputStream out = client.getOutputStream();
                     DataOutputStream dos = new DataOutputStream(out);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                    dos.writeBytes(SENDIMAGE);
+                    out.write(SENDIMAGE.getBytes());
                     currentMessage = reader.readLine();
                     System.out.println(currentMessage);
                     if (currentMessage.equals(OKAY)) {
@@ -58,25 +82,21 @@ class TCPClient {
                         currentMessage = reader.readLine();
                         System.out.println(currentMessage);
                         //todo change for android
-                        File file = new File("audiogram_image_large.gif");
+                        File file = new File("DB_onCreate.PNG");
                         int write;
                         in = new FileInputStream(file);
                         while ((write = in.read()) != -1) {
-                            System.out.println(write);
                             out.write(write);
                         }
 
                     } else {
-                        /*
-                        byte[] b = new byte[1024];
-                        int read;
-                        FileOutputStream out = new FileOutputStream("img.gif");
-                        while ((read = in.read()) != -1) {
-                            out.write(read);
-                        }
-*/
 
                     }
+                    in.close();
+                    out.close();
+                    dos.close();
+                    reader.close();
+                    client.close();
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -85,6 +105,62 @@ class TCPClient {
             }
         };
         t.start();
+        t.join();
 
+    }
+    
+    public LinkedList<BufferedImage> ConnectAndDownloadImages() throws InterruptedException {
+        LinkedList<BufferedImage> images = new LinkedList();
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                double lat = 100;
+                double lng = 100;
+                try {
+                    Socket client = new Socket("localhost", 9999);
+                    InputStream in = client.getInputStream();
+                    OutputStream out = client.getOutputStream();
+                    DataOutputStream dos = new DataOutputStream(out);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    out.write(DOWNLOADIMAGES.getBytes());
+                    currentMessage = reader.readLine();
+                    if (currentMessage.equals(OKAY)) {
+                        dos.writeBytes(String.valueOf(lat) + "\n");
+                        currentMessage = reader.readLine();
+                        dos.writeBytes(String.valueOf(lng) + "\n");
+                        currentMessage = reader.readLine();
+                        if(currentMessage.equals(OKAY)) {
+                        out.write(OKAYSEND.getBytes());
+                        currentMessage = reader.readLine();
+                        while(currentMessage.equals(SENDING)) {
+                            out.write(OKAYSEND.getBytes());
+                            BufferedImage image = ImageIO.read(in);
+                            images.add(image);
+                            out.write(RECIEVED.getBytes());
+                            currentMessage = reader.readLine();
+                        }
+                        } else {
+                            //No images on server for lat lng deal with it
+                        }
+                        
+
+                    } else {
+
+                    }
+                    in.close();
+                    out.close();
+                    dos.close();
+                    reader.close();
+                    client.close();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        t.start();
+        t.join();
+        return images;
     }
 }
