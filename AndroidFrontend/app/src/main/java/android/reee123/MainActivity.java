@@ -93,6 +93,11 @@ public class MainActivity extends AppCompatActivity {
         FlexboxLayout layout = (FlexboxLayout) findViewById(R.id.images_grid);
 
         ImageView imageView = new ImageView(this);
+        imageView.setMaxHeight(1000);
+        imageView.setMaxWidth(1000);
+        imageView.setMinimumHeight(250);
+        imageView.setMinimumWidth(250);
+
         //imageView.setMaxHeight(IMAGE_H);
         //imageView.setMaxWidth(IMAGE_W);
 
