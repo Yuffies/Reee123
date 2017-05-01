@@ -35,36 +35,19 @@ import static android.widget.GridLayout.spec;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-
+    private FlexboxLayout flexboxLayout;
     private int IMAGE_W = 0;
     private int IMAGE_H = 0;
-    private int arri = 0;
-    private int arrj = 0;
-    private int kat = 0;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
-        //DisplayMetrics disp = new DisplayMetrics();
-        //getWindowManager().getDefaultDisplay().getMetrics(disp);
-
-        //IMAGE_H = IMAGE_W = disp.widthPixels/2;
-        System.out.println(IMAGE_H);
-
+        flexboxLayout = (FlexboxLayout)findViewById(R.id.images_grid);
+        flexboxLayout.setTop(0);
     }
 
-
     public void addImageToGrid(String imageURL) {
-
-
-        //GridLayout layout = (GridLayout) findViewById(R.id.images_grid);
-        LinearLayout layout = (LinearLayout) findViewById(R.id.images_grid);
-
         ImageView imageView = new ImageView(this);
         imageView.setMaxHeight(IMAGE_H);
         imageView.setMaxWidth(IMAGE_W);
@@ -77,8 +60,7 @@ public class MainActivity extends AppCompatActivity {
             InputStream is = connection.getInputStream();
             Bitmap img = BitmapFactory.decodeStream(is);
             imageView.setImageBitmap(img);
-            layout.addView(imageView);
-
+            flexboxLayout.addView(imageView);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -86,23 +68,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
     public void addImageToGrid(Bitmap imageURL) {
-        //GridLayout layout = (GridLayout) findViewById(R.id.images_grid);
-        FlexboxLayout layout = (FlexboxLayout) findViewById(R.id.images_grid);
-
         ImageView imageView = new ImageView(this);
-        //imageView.setMaxHeight(IMAGE_H);
-        //imageView.setMaxWidth(IMAGE_W);
-
-
-        //if(arrj>1) arrj =0;
-        //imageView.setLayoutParams(new GridLayout.LayoutParams(spec(arri++),spec(arrj++)));
         imageView.setImageBitmap(imageURL);
-        layout.addView(imageView);
-
-
+        flexboxLayout.addView(imageView);
     }
 
     @Override
@@ -119,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         float x1 = 0;
         float x2 = 0;
         float DISTANCE = 100;
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 x1 = event.getX();
@@ -134,15 +104,11 @@ public class MainActivity extends AppCompatActivity {
                         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
                             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                         }
-
-
                     }
-
                     // Right to left swipe action
                     else {
                         System.out.println("rehehelllyyy");
                     }
-
                 } else {
                     // consider as something else - a screen tap for example
                 }
@@ -150,11 +116,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onTouchEvent(event);
     }
-
-
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-
 }
