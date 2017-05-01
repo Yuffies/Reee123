@@ -70,6 +70,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void addImageToGrid(Bitmap imageURL) {
         ImageView imageView = new ImageView(this);
+        imageView.setMaxHeight(1000);
+        imageView.setMaxWidth(1000);
+        imageView.setMinimumHeight(250);
+        imageView.setMinimumWidth(250);
         imageView.setImageBitmap(imageURL);
         flexboxLayout.addView(imageView);
     }
@@ -104,10 +108,6 @@ public class MainActivity extends AppCompatActivity {
                         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
                             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                         }
-                    }
-                    // Right to left swipe action
-                    else {
-                        System.out.println("rehehelllyyy");
                     }
                 } else {
                     // consider as something else - a screen tap for example
