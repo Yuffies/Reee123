@@ -1,28 +1,26 @@
 package android.reee123;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
+import android.view.View;
 import android.widget.ImageView;
 
 import com.google.android.flexbox.FlexboxLayout;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private FlexboxLayout flexboxLayout;
-    private int IMAGE_W = 0;
-    private int IMAGE_H = 0;
+    private int IMAGE_W = 250;
+    private int IMAGE_H = 250;
+    private int currentId = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,32 +31,27 @@ public class MainActivity extends AppCompatActivity {
         flexboxLayout.setTop(0);
     }
 
-    public void addImageToGrid(String imageURL) {
-        ImageView imageView = new ImageView(this);
-        imageView.setMaxHeight(IMAGE_H);
-        imageView.setMaxWidth(IMAGE_W);
-        imageView.setMinimumHeight(IMAGE_H);
-        imageView.setLayoutParams(new ViewGroup.LayoutParams(IMAGE_W, IMAGE_H));
-        URL url;
-        try {
-            url = new URL(imageURL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            InputStream is = connection.getInputStream();
-            Bitmap img = BitmapFactory.decodeStream(is);
-            imageView.setImageBitmap(img);
-            flexboxLayout.addView(imageView);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public void addImageToGrid(Bitmap imageURL) {
-        ImageView imageView = new ImageView(this);
-        imageView.setMinimumHeight(250);
-        imageView.setMinimumWidth(250);
+        final ImageView imageView = new ImageView(this);
+        final Context context = this.getApplicationContext();
+        imageView.setId(currentId++);
+        imageView.setMinimumHeight(IMAGE_H);
+        imageView.setMinimumWidth(IMAGE_W);
         imageView.setImageBitmap(imageURL);
+
+        // Tilføj onClickListener til at kunne previewe billederne
+        imageView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Bitmap bmp = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                byte[] b = baos.toByteArray();
+
+                Intent intent = new Intent(getApplicationContext(), ImagePreview.class);
+                intent.putExtra("image", b);
+                startActivity(intent);
+            }
+        });
         flexboxLayout.addView(imageView);
     }
 
